@@ -15,8 +15,8 @@ const int GRAVITY = 1;
 const int JUMP_STRENGTH = -9;
 const int PIPE_WIDTH = 70;
 const int PIPE_GAP = 160;
-const int PIPE_SPEED = 4;
-const int GROUND_SPEED = 4;
+const int PIPE_SPEED = 3;
+const int GROUND_SPEED = 3;
 
 std::vector<SDL_Texture*> numberTextures(10);
 bool loadNumberTextures(SDL_Renderer* renderer) {
@@ -54,7 +54,20 @@ void renderScore(SDL_Renderer* renderer, int score, int x, int y, int digitWidth
 struct Pipe {
     int x, height;
     bool passed;
-    Pipe(int startX, int h) : x(startX), height(h), passed(false) {}
+    int yVelocity;
+    bool canMove;
+    Pipe(int startX, int h, bool canMoveFrag) : x(startX), height(h), passed(false) {
+        yVelocity = ((rand()%3)-1);
+        if (yVelocity==0) yVelocity=1;
+    }
+    void update(){
+        if(canMove){
+            height+=yVelocity;
+            if(height<50||height>SCREEN_HEIGHT/2){
+                yVelocity=-yVelocity;
+            }
+        }
+    }
 };
 class Player {
 public:
@@ -67,7 +80,7 @@ public:
         y = startY;
         velocity = 0;
     }
-    void update(bool gameStarted, bool gameOver, bool endGame,bool soundEnable, Mix_Chunk* deadthSound, bool &soundPlayed) {
+    void update(bool gameStarted, bool &gameOver,bool soundEnable, Mix_Chunk* deadthSound, bool &soundPlayed) {
         if (gameStarted && !gameOver ) {
             velocity += GRAVITY;
             y += velocity;
@@ -79,7 +92,6 @@ public:
                 y = SCREEN_HEIGHT - GROUND_HEIGHT - 32;
                 velocity = 0;
                     gameOver=true;
-                    endGame=true;
                     if(soundEnable&& !soundPlayed){
                         Mix_PlayChannel(-1, deadthSound, 0);
                         soundPlayed = true;
@@ -131,6 +143,8 @@ int main(int argc, char* args[]) {
     }
     Player player(dogTexture, 50, SCREEN_HEIGHT / 2);
     std::vector<Pipe> pipes;
+    int pipespeed = PIPE_SPEED;
+    int groundspeed = GROUND_SPEED;
     int groundX = 0;
     int score = 0;
     int bestScore = 0;
@@ -147,7 +161,6 @@ int main(int argc, char* args[]) {
     bool gameRunning = true;
     bool gameStarted = false;
     bool gameOver = false;
-    bool endGame = false;
     bool isPaused = false;
     bool soundEnable = true;
     bool soundPlayed=false;
@@ -161,7 +174,7 @@ int main(int argc, char* args[]) {
                 if (event.key.keysym.sym == SDLK_SPACE) {
                     if (!gameStarted) {
                         gameStarted = true;
-                    } else if (!isPaused && !gameOver && !endGame) {
+                    } else if (!isPaused && !gameOver) {
                         player.jump();
                         if(soundEnable){
                             Mix_PlayChannel(-1, jumpSound, 0);
@@ -184,13 +197,12 @@ int main(int argc, char* args[]) {
                             Mix_Volume(-1, soundEnable ? MIX_MAX_VOLUME : 0);
                         }
                     }
-                    if(endGame && gameOver){
+                    if(gameOver){
                         int mouseX = event.button.x;
                         int mouseY = event.button.y;
                         if (mouseX >= (SCREEN_WIDTH-100)/2 && mouseX <= (SCREEN_WIDTH-100)/2 + 100 &&
                             mouseY >= (SCREEN_HEIGHT-56)/2+100 && mouseY <= (SCREEN_HEIGHT-56)/2+100 + 56) {
                             gameOver = false;
-                            endGame = false;
                             gameStarted = false;
                             pipes.clear();
                             player.y = SCREEN_HEIGHT / 2;
@@ -213,17 +225,22 @@ int main(int argc, char* args[]) {
         }
 
         if (!isPaused) {
-            player.update(gameStarted, gameOver, endGame, soundEnable, deathSound, soundPlayed);
+            player.update(gameStarted, gameOver, soundEnable, deathSound, soundPlayed);
         }
 
         if (gameStarted && !gameOver && !isPaused) {
             if (pipes.empty() || pipes.back().x < SCREEN_WIDTH - 210) {
                 int randomHeight = rand() % (SCREEN_HEIGHT / 2) + 50;
-                pipes.emplace_back(SCREEN_WIDTH, randomHeight);
+                bool moveAble = (score >= 20);
+                pipes.emplace_back(SCREEN_WIDTH, randomHeight, moveAble);
             }
 
             for (auto& pipe : pipes) {
-                pipe.x -= PIPE_SPEED;
+                pipe.x -= pipespeed;
+                pipe.update();
+                if(score>=20){
+                    pipe.canMove = true;
+                }
                 if (!pipe.passed && player.x > pipe.x + PIPE_WIDTH) {
                     pipe.passed = true;
                     score++;
@@ -240,7 +257,6 @@ int main(int argc, char* args[]) {
                     if (player.y < pipe.height || player.y + 32 > pipe.height + PIPE_GAP) {
                             if(!gameOver){
                                 gameOver = true;
-                                endGame = true;
                                 player.velocity=0;
                                 if(soundEnable && !soundPlayed){
                                     Mix_PlayChannel(-1, deathSound, 0);
@@ -253,8 +269,12 @@ int main(int argc, char* args[]) {
                 pipes.erase(pipes.begin());
             }
         }
-        if (!endGame && !isPaused) {
-            groundX -= GROUND_SPEED;
+        if(score%5==0){
+            pipespeed = PIPE_SPEED + score/5;
+            groundspeed = GROUND_SPEED + score/5;
+        }
+        if (!gameOver && !isPaused) {
+            groundX -= groundspeed;
             if (groundX <= -SCREEN_WIDTH) groundX = 0;
         }
 
@@ -276,7 +296,7 @@ int main(int argc, char* args[]) {
         if (gameStarted && !gameOver && !isPaused) {
             renderScore(renderer, score, SCREEN_WIDTH / 2 - std::to_string(score).length() * 13, 50);
         }
-        if (endGame && gameOver) {
+        if (gameOver) {
             SDL_Rect gameOverRect = { (SCREEN_WIDTH - 250) / 2, (SCREEN_HEIGHT - 209) / 2, 250, 209 };
             SDL_RenderCopy(renderer, gameOverTexture, NULL, &gameOverRect);
 

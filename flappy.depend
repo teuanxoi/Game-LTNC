@@ -1,0 +1,26 @@
+# depslib dependency file v1.0
+1743336003 source:c:\users\mediamart\desktop\dcmm\flappy\main.cpp
+	<SDL.h>
+	<SDL_image.h>
+	<SDL_mixer.h>
+	<iostream>
+	<vector>
+	<cstdlib>
+	<ctime>
+	<fstream>
+	<string>
+
+1743000565 c:\users\mediamart\desktop\dcmm\flappy\renderwindow.h
+	<SDL.h>
+	<SDL_image.h>
+
+1743000542 source:c:\users\mediamart\desktop\dcmm\flappy\renderwindow.cpp
+	<SDL.h>
+	<SDL_image.h>
+	<iostream>
+	"RenderWindow.h"
+
+1742999968 source:c:\users\mediamart\desktop\dcmm\flappy\doge.cpp
+
+1742999935 source:c:\users\mediamart\desktop\dcmm\flappy\game.cpp
+
