@@ -56,7 +56,7 @@ struct Pipe {
     bool passed;
     int yVelocity;
     bool canMove;
-    Pipe(int startX, int h, bool canMoveFrag) : x(startX), height(h), passed(false) {
+    Pipe(int startX, int h, bool canMoveFrag) : x(startX), height(h), passed(false), canMove(canMoveFrag) {
         yVelocity = ((rand()%3)-1);
         if (yVelocity==0) yVelocity=1;
     }
