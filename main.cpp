@@ -180,7 +180,7 @@ int main(int argc, char* args[]) {
                             Mix_PlayChannel(-1, jumpSound, 0);
                         }
                     }
-                } else if (event.key.keysym.sym == SDLK_p || event.key.keysym.sym == SDLK_ESCAPE) {
+                } else if (event.key.keysym.sym == SDLK_p || event.key.keysym.sym == SDLK_ESCAPE || event.key.keysym.sym == SDL_MOUSEBUTTONDOWN) {
                     isPaused = !isPaused;
                 }
             } else if (event.type == SDL_MOUSEBUTTONDOWN ) {
@@ -320,7 +320,7 @@ int main(int argc, char* args[]) {
             SDL_Rect pauseTabRect = { (SCREEN_WIDTH - 250) / 2, (SCREEN_HEIGHT - 128) / 2, 250, 128 };
             SDL_RenderCopy(renderer, pauseTabTexture, NULL, &pauseTabRect);
 
-            SDL_Rect soundIconRect = { (SCREEN_WIDTH-250) / 2 + 50, (SCREEN_HEIGHT - 128) / 2 + 40, 32, 24};
+            SDL_Rect soundIconRect = { (SCREEN_WIDTH -250) / 2 + 50, (SCREEN_HEIGHT - 128) / 2 + 40, 32, 24};
             SDL_RenderCopy(renderer, soundIcon, &soundClip[soundEnable ? 0 : 1] , &soundIconRect);
 
             renderScore(renderer, score, (SCREEN_WIDTH / 2 - std::to_string(score).length() * 13 + 80), SCREEN_HEIGHT / 2 - 30, 20, 30);
